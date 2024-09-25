@@ -5217,7 +5217,6 @@ func TestSyncJobWithJobBackoffLimitPerIndex(t *testing.T) {
 				Succeeded:               2,
 				Terminating:             ptr.To[int32](0),
 				CompletedIndexes:        "0,1",
-				FailedIndexes:           ptr.To(""),
 				UncountedTerminatedPods: &batch.UncountedTerminatedPods{},
 				Conditions: []batch.JobCondition{
 					{
