@@ -19,6 +19,7 @@ package resource
 import (
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -1129,8 +1130,8 @@ func TestPodResourceLimits(t *testing.T) {
 				},
 			}
 			limits := PodLimits(p, tc.options)
-			if !resourcesEqual(tc.expectedLimits, limits) {
-				t.Errorf("[%s] expected limits = %v, got %v", tc.description, tc.expectedLimits, limits)
+			if diff := cmp.Diff(limits, tc.expectedLimits); diff != "" {
+				t.Errorf("Diff limits: got=%v, want=%v, diff=%s", limits, tc.expectedLimits, diff)
 			}
 		})
 	}
