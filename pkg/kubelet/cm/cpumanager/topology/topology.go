@@ -18,8 +18,6 @@ package topology
 
 import (
 	"fmt"
-	"slices"
-	"sort"
 
 	cadvisorapi "github.com/google/cadvisor/info/v1"
 	"k8s.io/klog/v2"
@@ -139,31 +137,25 @@ func (d CPUDetails) UncoreInNUMANodes(ids ...int) cpuset.CPUSet {
 // CoresNeededInUncoreCache returns either the full list of all available unique core IDs associated with the given
 // UnCoreCache IDs in this CPUDetails or subset that matches the ask.
 func (d CPUDetails) CoresNeededInUncoreCache(numCoresNeeded int, ids ...int) cpuset.CPUSet {
+	coreIDs := d.coresInUncoreCache(ids...)
+	if coreIDs.Size() <= numCoresNeeded {
+		return coreIDs
+	}
+	tmpCoreIDs := coreIDs.List()
+	return cpuset.New(tmpCoreIDs[:numCoresNeeded]...)
+}
+
+// Helper function that just gets the cores
+func (d CPUDetails) coresInUncoreCache(ids ...int) cpuset.CPUSet {
 	var coreIDs []int
 	for _, id := range ids {
 		for _, info := range d {
 			if info.UncoreCacheID == id {
-
-				if !slices.Contains(coreIDs, info.CoreID) {
-					coreIDs = append(coreIDs, info.CoreID)
-				}
+				coreIDs = append(coreIDs, info.CoreID)
 			}
 		}
 	}
-	sort.Ints(coreIDs)
-
-	// return only unique coreID
-	var coresNeeded []int
-
-	if len(coreIDs) > numCoresNeeded {
-		// return only what is needed
-		coresNeeded = coreIDs[0:numCoresNeeded]
-	} else {
-		// return the full list
-		coresNeeded = coreIDs
-	}
-	klog.V(2).InfoS("Available coreIDs : ", "coresNeeded", coresNeeded)
-	return cpuset.New(coresNeeded...)
+	return cpuset.New(coreIDs...)
 }
 
 // CPUsInUncoreCaches returns all the logical CPU IDs associated with the given
